@@ -42,8 +42,6 @@ int main(int argc, char const *argv[])
     return EXIT_FAILURE;
   }
 
-  int previous_sond_id = -1;
-  enum mpd_state prev_state = MPD_STATE_UNKNOWN;
   struct mpd_connection *client = connect(argv[1], strtol(argv[2], NULL, 10));
 
   struct libevdev *dev = NULL;
@@ -72,8 +70,16 @@ int main(int argc, char const *argv[])
         printf("shutdown\n");
 
       } else if (libevdev_event_is_code(&ev, EV_KEY, KEY_PLAYPAUSE)) {
-        mpd_run_toggle_pause(client);
-        printf("toggle-pause\n");
+        struct mpd_status *status = mpd_run_status(client);
+        enum mpd_state state = mpd_status_get_state(status);
+
+        if (state != MPD_STATE_PLAY && state != MPD_STATE_PAUSE) {
+          mpd_run_play(client);
+          printf("play\n");
+        } else {
+          mpd_run_toggle_pause(client);
+          printf("toggle-pause\n");
+        }
 
       } else if (libevdev_event_is_code(&ev, EV_KEY, KEY_STOPCD)) {
         mpd_run_stop(client);
