@@ -52,7 +52,7 @@ int main(int argc, char const *argv[])
   rc = libevdev_new_from_fd(fd, &dev);
   if (rc < 0) {
     fprintf(stderr, "Failed to init libevdev (%d)\n", strerror(-rc));
-    exit(1);
+    return EXIT_FAILURE;
   }
   printf("Input device name: \"%s\"\n", libevdev_get_name(dev));
   printf("Input device ID: bus %#x vendor %#x product %#x\n",
@@ -116,16 +116,20 @@ int main(int argc, char const *argv[])
 
         mpd_run_set_volume(client, volume);
         printf("set-volume %d\n", volume);
-        /* } else { */
-        /*   printf("Event: %s %s %d\n", */
-        /*          libevdev_event_type_get_name(ev.type), */
-        /*          libevdev_event_code_get_name(ev.type, ev.code), */
-        /*          ev.value); */
+      } else {
+        printf("Event: %s %s %d\n",
+               libevdev_event_type_get_name(ev.type),
+               libevdev_event_code_get_name(ev.type, ev.code),
+               ev.value);
       }
     }
 
   }
-  while (rc == 1 || rc == 0 || rc == -EAGAIN);
+  while (rc == LIBEVDEV_READ_STATUS_SUCCESS ||
+         rc == LIBEVDEV_READ_STATUS_SYNC ||
+         rc == -EAGAIN);
+
+  printf("rc: %d\n", rc);
 
   if (client != NULL) {
     mpd_connection_free(client);
